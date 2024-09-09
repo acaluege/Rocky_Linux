@@ -1,0 +1,171 @@
+Step1: To set static IP address to the server, Modify settings like follows. ( Replace the interface name [enp1s0] to your own one because it's not the same on any System )
+
+# if you did not set HostName, set it like follows
+[root@localhost ~]#hostnamectl set-hostname aolua.rgl.local
+Legenda:
+aolua:hostname
+rgl.local.world:domain name
+
+# display devices
+[root@localhost ~]# nmcli device
+DEVICE  TYPE      STATE                   CONNECTION
+ens33   ethernet  connected               ens33
+virbr0  bridge    connected (externally)  virbr0
+
+# set IPv4 address
+[root@localhost ~]# nmcli connection modify enp1s0 ipv4.addresses 10.0.0.30/24
+[root@localhost ~]# nmcli connection modify ens33 ipv4.addresses 192.168.232.199/24
+
+# set gateway
+[root@localhost ~]# nmcli connection modify enp1s0 ipv4.gateway 10.0.0.1
+[root@localhost ~]# nmcli connection modify ens33 ipv4.gateway 192.168.232.2 [Opcional
+
+# set DNS
+# for multiple DNS, specify with space separated ⇒ ipv4.dns "10.0.0.10 10.0.0.11 10.0.0.12"
+[root@localhost ~]# nmcli connection modify enp1s0 ipv4.dns 10.0.0.10
+[root@localhost ~]# nmcli connection modify enp1s0 ipv4.dns 192.168.232.2
+
+[root@localhost master]# ip route show
+default via 192.168.232.2 dev ens33 proto dhcp src 192.168.232.199 metric 100
+192.168.122.0/24 dev virbr0 proto kernel scope link src 192.168.122.1 linkdown
+192.168.232.0/24 dev ens33 proto kernel scope link src 192.168.232.199 metric 100
+
+# set DNS
+# for multiple DNS, specify with space separated ⇒ ipv4.dns "10.0.0.10 10.0.0.11 10.0.0.12"
+[root@localhost ~]# nmcli connection modify enp1s0 ipv4.dns 10.0.0.10
+[root@localhost ~]# nmcli connection modify ens33 ipv4.dns 192.168.232.2 [Opcional]
+
+# set DNS search base (your domain name)
+[root@localhost ~]# nmcli connection modify ens33 ipv4.dns-search rgl.local
+
+# set [manual] for static setting
+# it's [auto] for DHCP setting
+[root@localhost ~]# nmcli connection modify ens33 ipv4.method manual
+
+# restart the interface to reload settings
+[root@localhost ~]# nmcli connection down ens33; nmcli connection up ens33
+Connection 'enp1s0' successfully deactivated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/1)
+Connection successfully activated (D-Bus active path: /org/freedesktop/NetworkManager/ActiveConnection/2)
+
+# confirm settings
+[root@localhost ~]# nmcli device show ens33
+GENERAL.DEVICE:                         ens33
+GENERAL.TYPE:                           ethernet
+GENERAL.HWADDR:                         00:0C:29:99:16:13
+GENERAL.MTU:                            1500
+GENERAL.STATE:                          100 (connected)
+GENERAL.CONNECTION:                     ens33
+GENERAL.CON-PATH:                       /org/freedesktop/NetworkManager/ActiveConnection/3
+WIRED-PROPERTIES.CARRIER:               on
+IP4.ADDRESS[1]:                         192.168.232.199/24
+IP4.GATEWAY:                            192.168.232.2
+IP4.ROUTE[1]:                           dst = 192.168.232.0/24, nh = 0.0.0.0, mt = 100
+IP4.ROUTE[2]:                           dst = 0.0.0.0/0, nh = 192.168.232.2, mt = 100
+IP4.DNS[1]:                             192.168.232.2
+IP4.SEARCHES[1]:                        rgl.local
+IP6.ADDRESS[1]:                         fe80::20c:29ff:fe99:1613/64
+IP6.GATEWAY:                            --
+IP6.ROUTE[1]:                           dst = fe80::/64, nh = ::, mt = 1024
+
+# confirm state
+[root@localhost ~]# ip address show
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: ens33: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq_codel state UP group default qlen 1000
+    link/ether 00:0c:29:99:16:13 brd ff:ff:ff:ff:ff:ff
+    altname enp2s1
+    inet 192.168.232.199/24 brd 192.168.232.255 scope global noprefixroute ens33
+       valid_lft forever preferred_lft forever
+    inet6 fe80::20c:29ff:fe99:1613/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
+3: virbr0: <NO-CARRIER,BROADCAST,MULTICAST,UP> mtu 1500 qdisc noqueue state DOWN group default qlen 1000
+    link/ether 52:54:00:91:89:34 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.122.1/24 brd 192.168.122.255 scope global virbr0
+       valid_lft forever preferred_lft forever
+
+#If you don't need IPv6, it's possible to disable it like follows
+[root@localhost ~]# vi /etc/default/grub
+GRUB_TIMEOUT=5
+GRUB_DISTRIBUTOR="$(sed 's, release .*$,,g' /etc/system-release)"
+GRUB_DEFAULT=saved
+GRUB_DISABLE_SUBMENU=true
+GRUB_TERMINAL_OUTPUT="console"
+#GRUB_CMDLINE_LINUX="crashkernel=auto resume=/dev/mapper/rl-swap rd.lvm.lv=rl/root rd.lvm.lv=rl/swap rhgb quiet"
+GRUB_DISABLE_RECOVERY="true"
+GRUB_ENABLE_BLSCFG=true
+# line 7 : add
+GRUB_CMDLINE_LINUX="ipv6.disable=1"
+
+
+# apply changes
+[root@localhost master]# grub2-mkconfig -o /boot/grub2/grub.cfg
+Generating grub configuration file ...
+done
+
+[root@localhost ~]# reboot
+
+[root@localhost ~]# ip address show
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
