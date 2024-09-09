@@ -1,0 +1,8 @@
+Rocky Linux 8 : Download
+
+# Download the Rocky Linux 8.5 ISO file for installation from the following site.
+https://download.rockylinux.org/pub/rocky/8/isos/x86_64/
+
+Rocky Linux 8 : Create an Installation Disk
+[root@aolua master]# systemctl enable --now cockpit.socket
+
