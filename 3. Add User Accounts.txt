@@ -1,0 +1,152 @@
+1. 
+[root@localhost ~]# useradd rocky
+[root@localhost ~]# passwd rocky
+Changing password for user rocky.
+New UNIX password:              # input any password you'd like to set
+Retype new UNIX password:       # confirm
+passwd: all authentication tokens updated successfully.
+
+2. If you'd like to limit users to run [su] command, configure like follows.
+On the example below, only users in [wheel] group can run [su] command.
+[root@localhost ~]# usermod -aG wheel rocky
+[root@localhost ~]# vi /etc/pam.d/su
+#%PAM-1.0
+auth            required        pam_env.so
+auth            sufficient      pam_rootok.so
+# Uncomment the following line to implicitly trust users in the "wheel" group.
+#auth           sufficient      pam_wheel.so trust use_uid
+# Uncomment the following line to require a user to be in the "wheel" group.
+auth            required        pam_wheel.so use_uid
+auth            substack        system-auth
+auth            include         postlogin
+account         sufficient      pam_succeed_if.so uid = 0 use_uid quiet
+account         include         system-auth
+password        include         system-auth
+session         include         system-auth
+session         include         postlogin
+session         optional        pam_xauth.so
+
+
+# verify settings with a user who is not in allowed group
+
+3. If you'd like to remove a user accounts, Set like follows.
+# remove a user [rocky] (only removed user account)
+[root@localhost ~]# userdel rocky
+# remove a user [rocky] (removed user account and his home directory both)
+[root@localhost ~]# userdel -r rocky
+
+Initial Settings : Firewall
+ 	
+Configure Firewall and SELinux.
+1. It's possible to display FireWall Service Status like follows. (enabled by default)
+[root@localhost ~]# systemctl status firewalld
+
+# stop service
+[root@localhost ~]# systemctl stop firewalld
+
+[root@localhost ~]# getenforce
+Enforcing     # SELinux is enabled
+
+[root@localhost ~]# vi /etc/selinux/config
+# This file controls the state of SELinux on the system.
+# SELINUX= can take one of these three values:
+#     enforcing - SELinux security policy is enforced.
+#     permissive - SELinux prints warnings instead of enforcing.
+#     disabled - No SELinux policy is loaded.
+# change the value below
+# enforcing  ⇒ enabled
+# disabled   ⇒ disabled
+# permissive ⇒ enabled but only logging, not deny accesses
+SELINUX=disabled
+# SELINUXTYPE= can take one of these three values:
+#     targeted - Targeted processes are protected,
+#     minimum - Modification of targeted policy. Only selected processes are proo
+tected.
+#     mls - Multi Level Security protection.
+SELINUXTYPE=targeted
+
+# restart computer to apply setting
+[root@localhost ~]# reboot
+
+Initial Settings : Configure Services
+# the list of services that are active now
+[root@dlp ~]# systemctl -t service
+64 loaded units listed. Pass --all to see loaded but inactive units, too.
+To show all installed unit files use 'systemctl list-unit-files'.
+
+# list of all services
+[root@dlp ~]# systemctl list-unit-files -t service
+
+
+2. Stop and turn OFF auto-start setting for a service if you don'd need it. (it's [smartd] as an example below)
+[root@dlp ~]# systemctl stop smartd
+[root@dlp ~]# systemctl disable smartd
+
+
+# Initial Settings : Update System
+[1. For commands to updating System, it's possible to use [yum] or [dnf], so you may use [yum] or [dnf] as you like.
+[root@dlp ~]# which yum
+/usr/bin/yum
+[root@dlp ~]# ll /usr/bin/yum
+lrwxrwxrwx. 1 root root 5 May 26 04:59 /usr/bin/yum -> dnf-3
+[root@dlp ~]# which dnf
+/usr/bin/dnf
+[root@dlp ~]# ll /usr/bin/dnf
+lrwxrwxrwx. 1 root root 5 May 26 04:59 /usr/bin/dnf -> dnf-3
+[root@dlp ~]# ll /usr/bin/dnf-3
+-rwxr-xr-x. 1 root root 1954 May 26 04:59 /usr/bin/dnf-3
+# installed [yum] package
+[root@dlp ~]# rpm -q yum
+yum-4.4.2-11.el8.noarch
+[root@dlp ~]# rpm -ql yum
+/etc/dnf/protected.d/yum.conf
+/etc/yum.conf
+/etc/yum/pluginconf.d
+/etc/yum/protected.d
+/etc/yum/vars
+/usr/bin/yum
+/usr/share/man/man1/yum-aliases.1.gz
+/usr/share/man/man5/yum.conf.5.gz
+/usr/share/man/man8/yum-shell.8.gz
+/usr/share/man/man8/yum.8.gz
+# included files are all links to [dnf]
+[root@dlp ~]# ll /etc/yum.conf
+lrwxrwxrwx. 1 root root 12 May 26 04:59 /etc/yum.conf -> dnf/dnf.conf
+[root@dlp ~]# ll /etc/yum/vars
+lrwxrwxrwx. 1 root root 11 May 26 04:59 /etc/yum/vars -> ../dnf/vars
+
+
+# Use Moduler Repository
+[root@dlp ~]# dnf module list
+
+# For installing available modules, Configure like follows.
+# for example, display [PostgreSQL] modules
+[root@dlp ~]# dnf module list postgresql
+
+# install PostgreSQL 10
+[root@dlp ~]# dnf module -y install postgresql:10
+Dependencies resolved.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
